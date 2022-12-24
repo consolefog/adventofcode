@@ -1,96 +1,92 @@
 import {readFile} from 'node:fs/promises';
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
-const isLegalLetterStep = (letterFrom, letterTo) => {
-  if (letterTo === undefined) {
-    return false;
+const IS_DEMO = true;
+
+const nodeFromXY = (xy, grid, parent) => {
+  return {
+    xy: xy,
+    parent: parent,
+    letter: grid[xy.up][xy.right],
+    neighbors: [],
   }
-
-  if (letterFrom === 'S') {
-    letterFrom = 'a'
-  }
-
-  if (letterFrom === 'E') {
-    letterFrom = 'z'
-  }
-
-  if (letterTo === 'S') {
-    letterTo = 'a'
-  }
-
-  if (letterTo === 'E') {
-    letterTo = 'z'
-  }
-
-  const fromIndex = LETTERS.indexOf(letterFrom);
-  const toIndex = LETTERS.indexOf(letterTo);
-
-  if (fromIndex === -1 || toIndex === -1) {
-    throw 'error';
-  }
-
-  return toIndex === fromIndex -1 || toIndex >= fromIndex ;
 }
 
-const historyContainsCandidate = (history, candidate) => {
-  return history.filter(h => {
-    return h.up === candidate.up && h.right === candidate.right
-  }).length > 0;
-}
-
-const getCandidates = fromXY => [{
-  // right
-  up: fromXY.up,
-  right: fromXY.right + 1,
-}, {
-  // left
-  up: fromXY.up,
-  right: fromXY.right - 1,
-}, {
-  // above
-  up: fromXY.up + 1,
-  right: fromXY.right,
-}, {
-  // below
-  up: fromXY.up - 1,
-  right: fromXY.right,
-}];
-
-const shortestPath = (config, fromXY, toXY) => {
-  if (toXY.letter !== 'S') {
-    throw 'error';
+const canMove = (fromLetter, toLetter) => {
+  if (fromLetter === 'S') {
+    fromLetter = 'a'
   }
 
-  if (fromXY.up === toXY.up && fromXY.right === toXY.right) {
-    return [];
-  } else {
-    let shortestCandidatePath = [];
-    getCandidates(fromXY).forEach(candidate => {
-      const row = config.grid[candidate.up];
-      if (row !== undefined) {
-        const currentLetter = config.grid[fromXY.up][fromXY.right];
-        const candidateLetter = row[candidate.right];
-        candidate.letter = candidateLetter;
-        if (isLegalLetterStep(currentLetter, candidateLetter)) {
-          if (!historyContainsCandidate(config.history, candidate)) {
-            const path = shortestPath({
-              ...config,
-              history: [...config.history, fromXY]
-            }, candidate, toXY);
-            if (path.length < shortestCandidatePath.length || shortestCandidatePath.length === 0) {
-              shortestCandidatePath = path;
-            }
-          }
-        }
+  if (fromLetter === 'E') {
+    fromLetter = 'z'
+  }
+
+  if (toLetter === 'S') {
+    toLetter = 'a'
+  }
+
+  if (toLetter === 'E') {
+    toLetter = 'z'
+  }
+
+  const fromIndex = LETTERS.indexOf(fromLetter);
+  const toIndex = LETTERS.indexOf(toLetter);
+
+  return toIndex - fromIndex <= 1;
+}
+
+const setNeighbors = (node, grid, seenNodes) => {
+  const possiblyAddNeighbor = (newUp, newRight) => {
+    const id = `${newUp}-${newRight}`;
+    if (!seenNodes.has(id)) {
+      const currentLetter = node.letter;
+      const newLetter = grid[newUp][newRight];
+      if (canMove(currentLetter, newLetter)) {
+        seenNodes.add(id);
+        const neighborXY = {up: newUp, right: newRight};
+        const neighbor = nodeFromXY(neighborXY, grid, node);
+        node.neighbors.push(neighbor);
+      }
+    }
+  };
+
+  const gridMaxUp = grid.length - 1;
+  const gridMaxRight = grid[0].length - 1;
+
+  if (node.xy.right < gridMaxRight) {
+    possiblyAddNeighbor(node.xy.up, node.xy.right + 1);
+  }
+
+  if (node.xy.right > 0) {
+    possiblyAddNeighbor(node.xy.up, node.xy.right - 1);
+  }
+
+  if (node.xy.up < gridMaxUp) {
+    possiblyAddNeighbor(node.xy.up + 1, node.xy.right);
+  }
+
+  if (node.xy.up > 0) {
+    possiblyAddNeighbor(node.xy.up - 1, node.xy.right);
+  }
+}
+
+const buildGraph = (node, grid, seenNodes, eRecorder) => {
+  setNeighbors(node, grid, seenNodes);
+  if (node.neighbors.length !== 0) {
+    node.neighbors.forEach(neighbor => {
+      if (neighbor.letter === 'E') {
+        eRecorder.value = neighbor;
+      } else {
+        buildGraph(neighbor, grid, seenNodes, eRecorder);
       }
     })
-
-    return [fromXY, ...shortestCandidatePath];
   }
 }
 
 const run = async () => {
-  const contents = await readFile('./2022/Q12/input.txt', { encoding: 'utf8' });
+  const contents = await readFile(IS_DEMO
+    ? './2022/Q12/input-demo.txt'
+    : './2022/Q12/input.txt', { encoding: 'utf8' });
   const lines = contents.split('\n')
   const grid = [];
   const startXY = {
@@ -123,17 +119,29 @@ const run = async () => {
     }
   }
 
-  const shortest = shortestPath({
-    grid: grid,
-    history: []
-  }, endXY, startXY)
+  const seenNodes = new Set();
+  const node = nodeFromXY(startXY, grid, undefined);
+  const eRecorder = {
+    value: undefined,
+  }
+  buildGraph(node, grid, seenNodes, eRecorder);
 
-  shortest.reverse();
+  const path = [];
 
-  const path = [startXY, ...shortest];
-  console.log(path)
-  console.log(path.map(p => p.letter).join(''))
-  console.log(path.length - 1)
+  const E = eRecorder.value;
+
+  if (E) {
+    let current = E;
+    while (current.parent !== undefined) {
+      path.push(current.letter)
+      current = current.parent;
+    }
+    path.push('S');
+  }
+
+  path.reverse();
+  console.log(path.join(''))
+  console.log(path.length);
 }
 
 run();
