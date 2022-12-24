@@ -1,0 +1,25 @@
+{
+  "name": "adventofcode",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "puzzle solutions",
+  "main": "index.js",
+  "scripts": {
+    "q1": "node 2022/Q1/script.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/consolefog/adventofcode.git"
+  },
+  "author": "James",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/consolefog/adventofcode/issues"
+  },
+  "homepage": "https://github.com/consolefog/adventofcode#readme",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.17"
+  }
+}
