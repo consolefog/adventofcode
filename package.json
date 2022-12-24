@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "q1": "node 2022/Q1/script.js",
-    "q2": "node 2022/Q2/script.js"
+    "q2": "node 2022/Q2/script.js",
+    "q3": "node 2022/Q3/script.js"
   },
   "repository": {
     "type": "git",
