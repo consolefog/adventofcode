@@ -141,7 +141,8 @@ const run = async () => {
 
   path.reverse();
   console.log(path.join(''))
-  console.log(path.length);
+  // num steps = num nodes - 1
+  console.log(path.length - 1);
 }
 
 run();
