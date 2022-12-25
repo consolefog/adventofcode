@@ -1,14 +1,63 @@
 import {readFile} from 'node:fs/promises';
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
-const IS_DEMO = true;
+const IS_DEMO = false;
 
-const nodeFromXY = (xy, grid, parent) => {
-  return {
-    xy: xy,
-    parent: parent,
-    letter: grid[xy.up][xy.right],
-    neighbors: [],
+class Queue {
+  constructor(maxSize) {
+    // Set default max size if not provided
+    if (isNaN(maxSize)) {
+      maxSize = 10;
+    }
+    this.maxSize = maxSize;
+    // Init an array that'll contain the queue values.
+    this.container = [];
+  }
+
+  // Helper function to display all values while developing
+  display() {
+    console.log(this.container);
+  }
+
+  // Checks if queue is empty
+  isEmpty() {
+    return this.container.length === 0;
+  }
+
+  // checks if queue is full
+  isFull() {
+    return this.container.length >= this.maxSize;
+  }
+
+  enqueue(element) {
+    // Check if Queue is full
+    if (this.isFull()) {
+      console.log('Queue Overflow!');
+      return;
+    }
+    // Since we want to add elements to end, we'll just push them.
+    this.container.push(element);
+  }
+
+  dequeue() {
+    // Check if empty
+    if (this.isEmpty()) {
+      console.log('Queue Underflow!');
+      return;
+    }
+    return this.container.shift();
+  }
+
+  peek() {
+    if (this.isEmpty()) {
+      console.log('Queue Underflow!');
+      return;
+    }
+    return this.container[0];
+  }
+
+  clear() {
+    this.container = [];
   }
 }
 
@@ -35,114 +84,129 @@ const canMove = (fromLetter, toLetter) => {
   return toIndex - fromIndex <= 1;
 }
 
-const setNeighbors = (node, grid, seenNodes) => {
-  const possiblyAddNeighbor = (newUp, newRight) => {
-    const id = `${newUp}-${newRight}`;
-    if (!seenNodes.has(id)) {
-      const currentLetter = node.letter;
-      const newLetter = grid[newUp][newRight];
-      if (canMove(currentLetter, newLetter)) {
-        seenNodes.add(id);
-        const neighborXY = {up: newUp, right: newRight};
-        const neighbor = nodeFromXY(neighborXY, grid, node);
-        node.neighbors.push(neighbor);
-      }
-    }
-  };
-
-  const gridMaxUp = grid.length - 1;
-  const gridMaxRight = grid[0].length - 1;
-
-  if (node.xy.right < gridMaxRight) {
-    possiblyAddNeighbor(node.xy.up, node.xy.right + 1);
-  }
-
-  if (node.xy.right > 0) {
-    possiblyAddNeighbor(node.xy.up, node.xy.right - 1);
-  }
-
-  if (node.xy.up < gridMaxUp) {
-    possiblyAddNeighbor(node.xy.up + 1, node.xy.right);
-  }
-
-  if (node.xy.up > 0) {
-    possiblyAddNeighbor(node.xy.up - 1, node.xy.right);
-  }
-}
-
-const buildGraph = (node, grid, seenNodes, eRecorder) => {
-  setNeighbors(node, grid, seenNodes);
-  if (node.neighbors.length !== 0) {
-    node.neighbors.forEach(neighbor => {
-      if (neighbor.letter === 'E') {
-        eRecorder.value = neighbor;
-      } else {
-        buildGraph(neighbor, grid, seenNodes, eRecorder);
-      }
-    })
-  }
-}
-
 const run = async () => {
   const contents = await readFile(IS_DEMO
     ? './2022/Q12/input-demo.txt'
-    : './2022/Q12/input.txt', { encoding: 'utf8' });
+    : './2022/Q12/input.txt', {encoding: 'utf8'});
   const lines = contents.split('\n')
-  const grid = [];
-  const startXY = {
-    up: 0,
-    right: 0,
-    letter: 'S'
-  }
-  const endXY = {
-    up: 0,
-    right: 0,
-    letter: 'E'
-  }
-  lines.forEach((line) => {
-    if (line.trim() === '') {
-      // do nothing.
-    } else {
-      grid.unshift(line.trim().split(''));
-    }
+  const vertices = []
+
+  const q = new Queue(100000);
+
+  let filteredLines = lines.filter(line => line.trim() !== '');
+  filteredLines.forEach((line, up) => {
+    const row = [];
+    line.trim().split('').forEach((letter, index) => {
+      const vertex = {
+        explored: false,
+        letter: letter,
+        up: filteredLines.length - 1 - up,
+        right: index,
+        edgeLeft: false,
+        edgeRight: false,
+        edgeUp: false,
+        edgeDown: false,
+        parent: undefined,
+      };
+      row.push(vertex);
+      if (vertex.letter === 'S') {
+        q.enqueue(vertex);
+      }
+    });
+    vertices.unshift(row);
   });
-  for (let i = 0; i < grid.length; i++) {
-    for (let j = 0; j < grid[i].length; j++) {
-      if (grid[i][j] === 'S') {
-        startXY.up = i
-        startXY.right = j;
-      }
-      if (grid[i][j] === 'E') {
-        endXY.up = i
-        endXY.right = j;
+
+
+  const defineEdges = (vertices) => {
+    for (let i = 0; i < vertices.length; i++) {
+      for (let j = 0; j < vertices[i].length; j++) {
+        let vertex = vertices[i][j];
+        let newI = i;
+        let newJ = j;
+
+        newI = i;
+        newJ = j - 1;
+        vertex.edgeLeft = newJ >= 0
+          && canMove(vertex.letter, vertices[newI][newJ].letter)
+
+        newI = i;
+        newJ = j + 1
+        vertex.edgeRight = newJ <= vertices[i].length - 1
+          && canMove(vertex.letter, vertices[newI][newJ].letter)
+
+        newI = i - 1;
+        newJ = j;
+        vertex.edgeDown = newI >= 0
+          && canMove(vertex.letter, vertices[newI][newJ].letter)
+
+        newI = i + 1;
+        newJ = j;
+        vertex.edgeUp = newI <= (vertices.length - 1)
+          && canMove(vertex.letter, vertices[newI][newJ].letter)
       }
     }
   }
 
-  const seenNodes = new Set();
-  const node = nodeFromXY(startXY, grid, undefined);
-  const eRecorder = {
-    value: undefined,
-  }
-  buildGraph(node, grid, seenNodes, eRecorder);
+  defineEdges(vertices);
 
-  const path = [];
+  let end = undefined;
 
-  const E = eRecorder.value;
+  while (!q.isEmpty() && end === undefined) {
+    const v = q.dequeue();
+    if (v.letter === 'E') {
+      end = v;
+    } else {
+      if (v.edgeLeft && !vertices[v.up][v.right - 1].explored) {
+        let w = vertices[v.up][v.right - 1];
+        w.explored = true;
+        w.parent = {
+          up: v.up,
+          right: v.right
+        };
+        q.enqueue(w);
+      }
 
-  if (E) {
-    let current = E;
-    while (current.parent !== undefined) {
-      path.push(current.letter)
-      current = current.parent;
+      if (v.edgeRight && !vertices[v.up][v.right + 1].explored) {
+        let w = vertices[v.up][v.right + 1];
+        w.explored = true;
+        w.parent = {
+          up: v.up,
+          right: v.right
+        };
+        q.enqueue(w);
+      }
+
+      if (v.edgeUp && !vertices[v.up + 1][v.right].explored) {
+        let w = vertices[v.up + 1][v.right];
+        w.explored = true;
+        w.parent = {
+          up: v.up,
+          right: v.right
+        };
+        q.enqueue(w);
+      }
+
+      if (v.edgeDown && !vertices[v.up - 1][v.right].explored) {
+        let w = vertices[v.up - 1][v.right];
+        w.explored = true;
+        w.parent = {
+          up: v.up,
+          right: v.right
+        };
+        q.enqueue(w);
+      }
     }
-    path.push('S');
   }
 
-  path.reverse();
-  console.log(path.join(''))
-  // num steps = num nodes - 1
-  console.log(path.length - 1);
+  let current = end;
+  let path = [];
+
+  while (current.letter !== 'S') {
+    path.push(current.letter);
+    current = vertices[current.parent.up][current.parent.right];
+  }
+
+  console.log(path, path.length);
 }
 
 run();
