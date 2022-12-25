@@ -42,6 +42,7 @@
   },
   "homepage": "https://github.com/consolefog/adventofcode#readme",
   "dependencies": {
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@types/node": "^18.11.17"
