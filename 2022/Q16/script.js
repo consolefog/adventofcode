@@ -2,7 +2,8 @@ import {readFile} from 'node:fs/promises';
 import {DEMO_DATA} from './DEMO_DATA.js';
 import {timeBetweenValvesBFS} from './timeBetweenValvesBFS.js';
 
-const MAX_ALLOWED_MINUTES = 30;
+const IS_PART_TWO = true;
+const MAX_ALLOWED_MINUTES = IS_PART_TWO ? 26 : 30;
 const PARSE_FROM_FILE = true;
 
 // Whatever the solution is it can, without loss of generality, be described
@@ -50,8 +51,45 @@ const routesPossibleInRemainingTime = (previousValve, valveChoices, valves, time
       all.push([])
     }
   })
+
   return all;
 }
+
+const calculateBestRoute = (valvesAvailableToTurnOn, valves) => {
+  const allValveRoutes = routesPossibleInRemainingTime('AA', valvesAvailableToTurnOn, valves, MAX_ALLOWED_MINUTES);
+
+  let best = {
+    name: undefined,
+    totalFlow: undefined
+  }
+
+  allValveRoutes.forEach(valveRoute => {
+    let previousValve = 'AA';
+    let prettyName = `AA-${valveRoute.join('-')}`;
+
+    let timeTaken = 0;
+    let totalFlow = 0;
+
+    valveRoute.forEach(valve => {
+      const travelTime = timeBetweenValvesBFS(previousValve, valve, valves);
+      timeTaken += travelTime;
+      // turn on
+      timeTaken += 1;
+      const timeThisNodeStartedHelping = timeTaken
+      const minutesThisValveHelped = MAX_ALLOWED_MINUTES - timeThisNodeStartedHelping;
+      const totalFlowFromValve = valves[valve].flow * minutesThisValveHelped;
+      previousValve = valve;
+      totalFlow += totalFlowFromValve;
+    });
+
+    if (timeTaken <= MAX_ALLOWED_MINUTES
+      && (best.name === undefined || totalFlow > best.totalFlow)) {
+      best.name = prettyName;
+      best.totalFlow = totalFlow;
+    }
+  })
+  return best;
+};
 
 const run = async () => {
   // path can be summarized as a series of times when the flow ones are turned on
@@ -85,40 +123,39 @@ const run = async () => {
 
   const keys = Object.keys(valves);
   const valvesWithNonZeroFlow = keys.filter(key => valves[key].flow > 0);
-  const allValveRoutes = routesPossibleInRemainingTime('AA', valvesWithNonZeroFlow, valves, MAX_ALLOWED_MINUTES);
 
-  let best = {
-    name: undefined,
-    totalFlow: undefined
-  }
+  if (!IS_PART_TWO) {
+    console.log(calculateBestRoute(valvesWithNonZeroFlow, valves));
+  } else {
+    // best solo AA-CA-JF-LE-FP-YH-UX-AR-DM
+    let combinedTotalBest = 0;
 
-  allValveRoutes.forEach(valveRoute => {
-    let previousValve = 'AA';
-    let prettyName = `${valveRoute.join('-')}`;
+    const elephantsOptions = [...valvesWithNonZeroFlow];
 
-    let timeTaken = 0;
-    let totalFlow = 0;
+    // this is the best path for one person with 26 minutes
+    // calculated by running part 1 with 26 as the limit not 30.
+    const me = ['TU', 'UK', 'EK', 'GW', 'JT']
 
-    valveRoute.forEach(valve => {
-      const travelTime = timeBetweenValvesBFS(previousValve, valve, valves);
-      timeTaken += travelTime;
-      // turn on
-      timeTaken += 1;
-      const timeThisNodeStartedHelping = timeTaken
-      const minutesThisValveHelped = MAX_ALLOWED_MINUTES - timeThisNodeStartedHelping;
-      const totalFlowFromValve = valves[valve].flow * minutesThisValveHelped;
-      previousValve = valve;
-      totalFlow += totalFlowFromValve;
-    });
+    me.forEach(v => {
+      const indexToRemove = elephantsOptions.indexOf(v);
+      elephantsOptions.splice(indexToRemove, 1);
+    })
 
-    if (timeTaken <= MAX_ALLOWED_MINUTES
-      && (best.name === undefined || totalFlow > best.totalFlow)) {
-      best.name = prettyName;
-      best.totalFlow = totalFlow;
+    const myResponsibility = me;
+    const elephantResponsibility = elephantsOptions;
+
+    const myBest = calculateBestRoute(myResponsibility, valves);
+    const elephantsBest = calculateBestRoute(elephantResponsibility, valves);
+
+    const combinedTotalFlow = myBest.totalFlow + elephantsBest.totalFlow;
+
+    console.log(myBest, elephantsBest);
+
+    if (combinedTotalFlow > combinedTotalBest) {
+      combinedTotalBest = combinedTotalFlow;
     }
-  })
-
-  console.log(best);
+    console.log(combinedTotalBest);
+  }
 }
 
 run();
