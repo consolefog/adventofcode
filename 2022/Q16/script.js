@@ -127,9 +127,6 @@ const run = async () => {
   if (!IS_PART_TWO) {
     console.log(calculateBestRoute(valvesWithNonZeroFlow, valves));
   } else {
-    // best solo AA-CA-JF-LE-FP-YH-UX-AR-DM
-    let combinedTotalBest = 0;
-
     const elephantsOptions = [...valvesWithNonZeroFlow];
 
     // this is the best path for one person with 26 minutes
@@ -147,14 +144,11 @@ const run = async () => {
     const myBest = calculateBestRoute(myResponsibility, valves);
     const elephantsBest = calculateBestRoute(elephantResponsibility, valves);
 
-    const combinedTotalFlow = myBest.totalFlow + elephantsBest.totalFlow;
-
-    console.log(myBest, elephantsBest);
-
-    if (combinedTotalFlow > combinedTotalBest) {
-      combinedTotalBest = combinedTotalFlow;
-    }
-    console.log(combinedTotalBest);
+    console.log({
+      me: myBest,
+      elephant: elephantsBest,
+      total: myBest.totalFlow + elephantsBest.totalFlow
+    });
   }
 }
 
