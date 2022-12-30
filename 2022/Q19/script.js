@@ -19,7 +19,7 @@ const getNextMinuteBuildChoices = (resources, blueprint) => {
   }).map(type => parseInt(type, 10));
 }
 
-const buildRobotAndRecur = (blueprint, typeToFinishBuilding, totalGeodes, minutesRemaining, resources, robots, banned) => {
+const proceedOneMinute = (blueprint, typeToFinishBuilding, totalGeodes, minutesRemaining, resources, robots, banned) => {
   // increase resources by the number of each robot
   resources[ORE] += robots[ORE];
   resources[CLAY] += robots[CLAY];
@@ -55,17 +55,17 @@ const buildRobotAndRecur = (blueprint, typeToFinishBuilding, totalGeodes, minute
     const nextMinuteBuildChoices = getNextMinuteBuildChoices(resources, blueprint);
 
     if (nextMinuteBuildChoices.includes(GEODE)) {
-      buildRobotAndRecur(blueprint, GEODE, totalGeodes, minutesRemaining, [...resources], [...robots], [])
+      proceedOneMinute(blueprint, GEODE, totalGeodes, minutesRemaining, [...resources], [...robots], [])
     } else {
       nextMinuteBuildChoices.forEach(choice => {
         if (!banned.includes(choice)) {
-          buildRobotAndRecur(blueprint, choice, totalGeodes, minutesRemaining, [...resources], [...robots], [])
+          proceedOneMinute(blueprint, choice, totalGeodes, minutesRemaining, [...resources], [...robots], [])
         }
       });
 
       if (nextMinuteBuildChoices.length !== 3) {
         // we should only be building nothing if we can't build anything.
-        buildRobotAndRecur(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], nextMinuteBuildChoices)
+        proceedOneMinute(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], nextMinuteBuildChoices)
       }
     }
   }
@@ -101,7 +101,7 @@ const parseBlueprints = async () => {
   const blueprints = await parseBlueprints();
   let totalQualityLevel = 0;
   const results = (IS_PART_1 ? blueprints : blueprints.slice(0, 3)).map((blueprint, index) => {
-    buildRobotAndRecur(blueprint, undefined, 0, NUM_MINUTES, [0, 0, 0, 0], [1, 0, 0, 0], []);
+    proceedOneMinute(blueprint, undefined, 0, NUM_MINUTES, [0, 0, 0, 0], [1, 0, 0, 0], []);
     totalQualityLevel += bestTotalGeodes * (index + 1)
     const mapped = bestTotalGeodes;
     console.log(`Blueprint ${index + 1}`, mapped);
