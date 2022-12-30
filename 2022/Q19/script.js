@@ -19,22 +19,23 @@ const getBuildNextChoices = (resources, blueprint) => {
   }).map(type => parseInt(type, 10));
 }
 
-const buildRobotAndRecur = (blueprint, robotIndex, totalGeodes, minutesRemaining, resources, robots, banned) => {
+const buildRobotAndRecur = (blueprint, typeToFinishBuilding, totalGeodes, minutesRemaining, resources, robots, banned) => {
   // increase resources by the number of each robot
   resources[ORE] += robots[ORE];
   resources[CLAY] += robots[CLAY];
   resources[OBSIDIAN] += robots[OBSIDIAN];
   resources[GEODE] += robots[GEODE];
 
-  if (robotIndex !== undefined) {
+  if (typeToFinishBuilding !== undefined) {
     const resourcesRemaining = [...resources];
-    resourcesRemaining[ORE] -= blueprint[robotIndex][ORE];
-    resourcesRemaining[CLAY] -= blueprint[robotIndex][CLAY];
-    resourcesRemaining[OBSIDIAN] -= blueprint[robotIndex][OBSIDIAN];
-    resourcesRemaining[GEODE] -= blueprint[robotIndex][GEODE];
+    const buildCost = blueprint[typeToFinishBuilding];
+    resourcesRemaining[ORE] -= buildCost[ORE];
+    resourcesRemaining[CLAY] -= buildCost[CLAY];
+    resourcesRemaining[OBSIDIAN] -= buildCost[OBSIDIAN];
+    resourcesRemaining[GEODE] -= buildCost[GEODE];
     resources = resourcesRemaining;
-    robots[robotIndex]++;
-    if (robotIndex === GEODE) {
+    robots[typeToFinishBuilding]++;
+    if (typeToFinishBuilding === GEODE) {
       // this geode robot will start contributing next minute
       totalGeodes += (minutesRemaining - 1);
     }
