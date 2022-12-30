@@ -10,7 +10,7 @@ const GEODE = 3;
 
 let bestTotalGeodes = 0;
 
-const getBuildNextChoices = (resources, blueprint) => {
+const getNextMinuteBuildChoices = (resources, blueprint) => {
   return Object.keys(blueprint).filter(type => {
     return (resources[ORE] - blueprint[type][ORE] >= 0) &&
       (resources[CLAY] - blueprint[type][CLAY] >= 0) &&
@@ -52,19 +52,19 @@ const buildRobotAndRecur = (blueprint, typeToFinishBuilding, totalGeodes, minute
   } else {
     // continue to next minute
 
-    const buildNextChoices = getBuildNextChoices(resources, blueprint);
+    const nextMinuteBuildChoices = getNextMinuteBuildChoices(resources, blueprint);
 
-    if (buildNextChoices.includes(GEODE)) {
+    if (nextMinuteBuildChoices.includes(GEODE)) {
       buildRobotAndRecur(blueprint, GEODE, totalGeodes, minutesRemaining, [...resources], [...robots], [])
     } else {
-      buildNextChoices.forEach(choice => {
+      nextMinuteBuildChoices.forEach(choice => {
         if (!banned.includes(choice)) {
           buildRobotAndRecur(blueprint, choice, totalGeodes, minutesRemaining, [...resources], [...robots], [])
         }
       });
 
-      if (buildNextChoices.length !== 3) {
-        buildRobotAndRecur(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], buildNextChoices)
+      if (nextMinuteBuildChoices.length !== 3) {
+        buildRobotAndRecur(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], nextMinuteBuildChoices)
       }
     }
   }
