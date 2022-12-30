@@ -47,22 +47,21 @@ const buildRobotAndRecur = (blueprint, typeToFinishBuilding, totalGeodes, minute
     if (totalGeodes > bestTotalGeodes) {
       bestTotalGeodes = totalGeodes;
     }
-    return;
-  }
-
-  const buildNextChoices = getBuildNextChoices(resources, blueprint);
-
-  if (buildNextChoices.includes(GEODE)) {
-    buildRobotAndRecur(blueprint, GEODE, totalGeodes, minutesRemaining, [...resources], [...robots], [])
   } else {
-    buildNextChoices.forEach(choice => {
-      if (!banned.includes(choice)) {
-        buildRobotAndRecur(blueprint, choice, totalGeodes, minutesRemaining, [...resources], [...robots], [])
-      }
-    });
+    const buildNextChoices = getBuildNextChoices(resources, blueprint);
 
-    if (buildNextChoices.length !== 3) {
-      buildRobotAndRecur(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], buildNextChoices)
+    if (buildNextChoices.includes(GEODE)) {
+      buildRobotAndRecur(blueprint, GEODE, totalGeodes, minutesRemaining, [...resources], [...robots], [])
+    } else {
+      buildNextChoices.forEach(choice => {
+        if (!banned.includes(choice)) {
+          buildRobotAndRecur(blueprint, choice, totalGeodes, minutesRemaining, [...resources], [...robots], [])
+        }
+      });
+
+      if (buildNextChoices.length !== 3) {
+        buildRobotAndRecur(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], buildNextChoices)
+      }
     }
   }
 };
