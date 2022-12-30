@@ -64,7 +64,7 @@ const proceedOneMinute = (blueprint, typeToFinishBuilding, totalGeodes, minutesR
       });
 
       if (nextMinuteBuildChoices.length !== 3) {
-        // we should only be building nothing if we can't build anything.
+        // we should only be building nothing if we can't build all or ore, clay, and obsidian (3).
         proceedOneMinute(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], nextMinuteBuildChoices)
       }
     }
