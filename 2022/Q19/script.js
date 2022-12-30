@@ -44,10 +44,14 @@ const buildRobotAndRecur = (blueprint, typeToFinishBuilding, totalGeodes, minute
   minutesRemaining--;
 
   if (minutesRemaining === 0) {
+    // we ran out of minutes
+
     if (totalGeodes > bestTotalGeodes) {
       bestTotalGeodes = totalGeodes;
     }
   } else {
+    // continue to next minute
+
     const buildNextChoices = getBuildNextChoices(resources, blueprint);
 
     if (buildNextChoices.includes(GEODE)) {
