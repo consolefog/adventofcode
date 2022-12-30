@@ -64,6 +64,7 @@ const buildRobotAndRecur = (blueprint, typeToFinishBuilding, totalGeodes, minute
       });
 
       if (nextMinuteBuildChoices.length !== 3) {
+        // we should only be building nothing if we can't build anything.
         buildRobotAndRecur(blueprint, undefined, totalGeodes, minutesRemaining, [...resources], [...robots], nextMinuteBuildChoices)
       }
     }
