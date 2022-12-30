@@ -10,12 +10,12 @@ const GEODE = 3;
 
 let bestTotalGeodes = 0;
 
-const getBuildNextChoices = (resources, prices) => {
-  return Object.keys(prices).filter(type => {
-    return (resources[ORE] - prices[type][ORE] >= 0) &&
-      (resources[CLAY] - prices[type][CLAY] >= 0) &&
-      (resources[OBSIDIAN] - prices[type][OBSIDIAN] >= 0) &&
-      (resources[GEODE] - prices[type][GEODE] >= 0);
+const getBuildNextChoices = (resources, blueprint) => {
+  return Object.keys(blueprint).filter(type => {
+    return (resources[ORE] - blueprint[type][ORE] >= 0) &&
+      (resources[CLAY] - blueprint[type][CLAY] >= 0) &&
+      (resources[OBSIDIAN] - blueprint[type][OBSIDIAN] >= 0) &&
+      (resources[GEODE] - blueprint[type][GEODE] >= 0);
   }).map(type => parseInt(type, 10));
 }
 
