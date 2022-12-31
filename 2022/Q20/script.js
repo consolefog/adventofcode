@@ -115,21 +115,10 @@ const moveElementAtIndex = (arr, from, swapsLeftToDo) => {
 
   array.forEach(item => {
     const mod = array.length - 1;
-    let a = item.originalValue % mod;
-    let b = DECRYPTION_KEY % mod;
-    if (item.originalValue < 0) {
-      let positiveValue = (a * b) % mod;
-      while (positiveValue > 0) {
-        positiveValue -= mod;
-      }
-      item.swaps = positiveValue;
-    } else {
-      item.swaps = ((a * b) % mod);
-    }
+    item.swaps = ((item.originalValue * DECRYPTION_KEY) % mod);
   });
 
   const result = mix(array);
-  console.log(result, result.length === array.length);
   const indexOfZero = result.findIndex(element => element.originalValue === 0)
   let a = result[(indexOfZero + 1000) % result.length];
   let b = result[(indexOfZero + 2000) % result.length];
