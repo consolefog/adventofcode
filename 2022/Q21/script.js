@@ -5,6 +5,12 @@ import {readFile} from 'node:fs/promises';
 // set humn to be the complex number (0 + 1.i) then solve the equation 'for i' in...
 // sbtm:= x + iy = bmgf = 12725480108701
 
+// this solution has to assume that two sides of a multiplication / division never
+// both have non-zero imaginary coefficient.
+
+// it's not clear to me that we can assume this but is possible it falls out from the
+// fact that none of the equations can be circular?
+
 const DEMO_INPUT = 'root: pppw + sjmn\n' +
   'dbpl: 5\n' +
   'cczh: sllz + lgvd\n' +
