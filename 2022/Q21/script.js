@@ -1,7 +1,9 @@
 import {readFile} from 'node:fs/promises';
 
-const IS_DEMO = false;
-const IS_PART_TWO = true;
+// idea
+
+// set humn to be the complex number (0 + 1.i) then solve the equation 'for i' in...
+// sbtm:= x + iy = bmgf = 12725480108701
 
 const DEMO_INPUT = 'root: pppw + sjmn\n' +
   'dbpl: 5\n' +
@@ -46,6 +48,8 @@ const subtract = (a, b) => {
     imaginary: a.imaginary - b.imaginary
   };
 };
+
+const IS_DEMO = false;
 
 const parseInputValues = async () => {
   const values = {}
@@ -120,12 +124,6 @@ const setResultAndGet = (values, name) => {
       const dependencyZero = setResultAndGet(values, name0).result;
       const dependencyOne = setResultAndGet(values, name1).result;
 
-      console.log(dependencyZero, dependencyOne);
-
-      if (dependencyZero === NaN || dependencyOne === NaN) {
-        throw 'eijehdskjhdrror';
-      }
-
       math = value.operation(dependencyZero, dependencyOne)
     }
     value.result = {
@@ -137,14 +135,11 @@ const setResultAndGet = (values, name) => {
   return value;
 };
 
-// root: sbtm = bmgf
-// root: sbtm = 12725480108701
-
-
 const values = await parseInputValues();
 
-const x = setResultAndGet(values, 'sbtm');
+// root: sbtm = bmgf ?
 
-// 3375719472770
+const bmgf = setResultAndGet(values, 'bmgf').result.real;
+const complex = setResultAndGet(values, 'sbtm');
 
-console.log(x);
+console.log((bmgf - complex.result.real) / complex.result.imaginary);
