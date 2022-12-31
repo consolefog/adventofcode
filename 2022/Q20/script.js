@@ -25,47 +25,6 @@ const mix = arr => {
   return editing
 };
 
-const runFile = async () => {
-  const contents = await readFile('./2022/Q20/input.txt', { encoding: 'utf8' });
-  const lines = contents.split('\n')
-  const array = [];
-
-  lines.forEach((line, originalIndex) => {
-    if (line.trim() === '') {
-      // do nothing.
-    } else {
-      const number = parseInt(line.trim(), 10);
-      array.push({
-        originalValue: number,
-        originalIndex: originalIndex
-      })
-    }
-  });
-
-  array.forEach(item => {
-    const mod = array.length - 1;
-    let a = item.originalValue % mod;
-    let b = DECRYPTION_KEY % mod;
-    if (item.originalValue < 0) {
-      let positiveValue = (a * b) % mod;
-      while (positiveValue > 0) {
-        positiveValue -= mod;
-      }
-      item.swaps = positiveValue;
-    } else {
-      item.swaps = ((a * b) % mod);
-    }
-  });
-
-  const result = mix(array);
-  console.log(result, result.length === array.length);
-  const indexOfZero = result.findIndex(element => element.originalValue === 0)
-  let a = result[(indexOfZero + 1000) % result.length];
-  let b = result[(indexOfZero + 2000) % result.length];
-  let c = result[(indexOfZero + 3000) % result.length];
-  console.log((a.originalValue + b.originalValue + c.originalValue) * DECRYPTION_KEY);
-}
-
 const moveElementAtIndex = (arr, from, swapsLeftToDo) => {
   if (swapsLeftToDo === 0) {
     // do nothing
@@ -137,11 +96,43 @@ const moveElementAtIndex = (arr, from, swapsLeftToDo) => {
   }
 }
 
+(async () => {
+  const contents = await readFile('./2022/Q20/input.txt', {encoding: 'utf8'});
+  const lines = contents.split('\n')
+  const array = [];
 
+  lines.forEach((line, originalIndex) => {
+    if (line.trim() === '') {
+      // do nothing.
+    } else {
+      const number = parseInt(line.trim(), 10);
+      array.push({
+        originalValue: number,
+        originalIndex: originalIndex
+      })
+    }
+  });
 
-const runDemo = () => {
-  console.log(mix([1, 2, -3, 3, -2, 0, 4]));
-}
+  array.forEach(item => {
+    const mod = array.length - 1;
+    let a = item.originalValue % mod;
+    let b = DECRYPTION_KEY % mod;
+    if (item.originalValue < 0) {
+      let positiveValue = (a * b) % mod;
+      while (positiveValue > 0) {
+        positiveValue -= mod;
+      }
+      item.swaps = positiveValue;
+    } else {
+      item.swaps = ((a * b) % mod);
+    }
+  });
 
-runFile();
-// runDemo();
+  const result = mix(array);
+  console.log(result, result.length === array.length);
+  const indexOfZero = result.findIndex(element => element.originalValue === 0)
+  let a = result[(indexOfZero + 1000) % result.length];
+  let b = result[(indexOfZero + 2000) % result.length];
+  let c = result[(indexOfZero + 3000) % result.length];
+  console.log((a.originalValue + b.originalValue + c.originalValue) * DECRYPTION_KEY);
+})();
