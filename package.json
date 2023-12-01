@@ -29,7 +29,8 @@
     "q22": "node 2022/Q22/script.js",
     "q23": "node 2022/Q23/script.js",
     "q24": "node 2022/Q24/script.js",
-    "q25": "node 2022/Q25/script.js"
+    "q25": "node 2022/Q25/script.js",
+    "q2023": "node 2023/utils/runQuestion.js"
   },
   "repository": {
     "type": "git",
