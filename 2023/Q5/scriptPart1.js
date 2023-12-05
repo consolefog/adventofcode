@@ -7,18 +7,12 @@ export const question = async () => {
   const lines = (await readFileLines(`${ROOT_DIR_2023}Q5/input.txt`)).filter(line => line !== '');
 
   const maps = [];
-  const seedRanges = [];
+  let seedNumbers;
 
   lines.forEach(line => {
     if (line.includes('seeds')) {
       const seeds = line.split(': ')[1];
-      const seedNumberPairs = readNumberArray(seeds);
-      for(let i = 0; i < seedNumberPairs.length - 1; i = i + 2) {
-        seedRanges.push({
-          from: seedNumberPairs[i],
-          to: seedNumberPairs[i] + seedNumberPairs[i + 1] - 1,
-        });
-      }
+      seedNumbers = readNumberArray(seeds);
     } else {
       if (line.includes('-to-')) {
         const newMap = {}
@@ -42,13 +36,18 @@ export const question = async () => {
         range.toRangeEnd = mappingNumbers[0] + mappingNumbers[2] - 1;
         range.fromRangeStart = mappingNumbers[1];
         range.fromRangeEnd = mappingNumbers[1] + mappingNumbers[2] - 1;
-        range.lowestLocationSeen = undefined;
         map.ranges.push(range);
       }
     }
   });
 
-  const getLocationForSeed = seed => {
+  maps.forEach(map => {
+    console.log(map, [...map.ranges])
+  })
+
+  let lowestLocation = -1;
+
+  seedNumbers.forEach(seed => {
     let fromKey = seed;
     maps.forEach(map => {
       let toKey = fromKey;
@@ -61,23 +60,13 @@ export const question = async () => {
       });
       fromKey = toKey;
     })
-    return fromKey;
-  };
-
-  let lowest = -1;
-
-  seedRanges.forEach(range => {
-    console.log(range, range.to - range.from, 'of', seedRanges.length);
-    for (let i = range.from; i <= range.to; i++) {
-      const location = getLocationForSeed(i);
-      if (lowest === -1 || location < lowest) {
-        lowest = location;
-      }
+    console.log('seed', seed, fromKey);
+    if (lowestLocation === -1 || fromKey < lowestLocation) {
+      lowestLocation = fromKey;
     }
-    console.log(lowest);
   });
 
-  console.log(lowest);
+  console.log(lowestLocation);
 
   return Promise.resolve();
 };
