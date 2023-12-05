@@ -52,6 +52,6 @@ const questions = {
   q25,
 }
 
-const question = 'q3';
+const question = 'q4';
 console.log('running question', question);
 questions[question]();
