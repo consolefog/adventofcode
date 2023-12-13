@@ -1,96 +1,142 @@
 import {readFileLines} from '../utils/readFileLines.js';
 import {ROOT_DIR_2023} from '../utils/consts.js';
 
+const IS_PART_2 = true;
+const ENABLE_CACHE = true;
+
 const parseGroupsArray = string => {
   return string.split(',').map(i => i.trim()).map(i => parseInt(i, 10));
 };
 
-// const getLengthsForString = c => {
-//   const groups = c.replaceAll(/\.+/g, '.').split('.').filter(g => g.length !== 0);
-//   return groups.map(g => g.length);
-// };
+let cache = {}
 
-const getLengthsForString = (c, caches) => {
-  let currLength = 0;
-  const retVal = [];
-  for (let i = 0; i < c.length; i++) {
-    let l = c.charAt(i);
-    if (l !== '.') {
-      currLength++;
-    } else {
-      if (currLength !== 0) {
-        retVal.push(currLength);
-      }
-      currLength = 0;
-    }
+const getMatchesWithCache = state => {
+  const cacheKey = `${state.after}-${state.afterGroups.join('_')}`
+  if (cache[cacheKey]) {
+    return cache[cacheKey];
+  } else {
+    const matches = getMatches(state);
+    cache[cacheKey] = matches;
+    return matches;
   }
-  if (currLength !== 0) {
-    retVal.push(currLength);
-  }
-  return retVal;
 }
 
-const lengthsMatchGroups = (str, groups, caches) => {
-  if (str.length === 0) {
-    return true;
+const getMatchesOptimized = state => {
+  if (ENABLE_CACHE) {
+    return getMatchesWithCache(state);
+  } else {
+    return getMatches(state);
   }
+}
 
-  const lengths = getLengthsForString(str, caches);
+const getMatches = state => {
+  const { after, afterGroups } = state;
 
-  if (lengths.length > 0) {
-    for(let i = 0; i < lengths.length - 1; i++) {
-      if (groups[groups.length - 1 - i] !== lengths[lengths.length - 1 - i]) {
-        return false;
-      }
+  if (after.length === 0) {
+    if (afterGroups.length === 0) {
+      return 1;
+    } else {
+      return 0;
     }
-    return groups[groups.length - lengths.length] >= lengths[0];
-  } else {
-    return true;
   }
-};
 
-const getAllPossibilities = (queryString, groups, fullLength, caches) => {
-  let firstQuestion = queryString.indexOf('?');
-  if (firstQuestion !== -1) {
-    const beforeQuestion = queryString.substring(0, firstQuestion);
-    const afterQuestion = queryString.substring(firstQuestion + 1);
-    let all = getAllPossibilities(`${afterQuestion}`, groups, fullLength, caches);
-    let superValidA = all.map(x => `${beforeQuestion}#${x}`).filter((p) => lengthsMatchGroups(p, groups, caches));
-    let superValidB = all.map(x => `${beforeQuestion}.${x}`).filter((p) => lengthsMatchGroups(p, groups, caches));
-    return [...superValidA, ...superValidB];
-  } else {
-    return [queryString];
+  if (afterGroups.length > 0) {
+    let space = 0;
+    for(let i = 0; i < afterGroups.length; i++) {
+      space += afterGroups[i];
+      space += 1;
+    }
+    space -= 1;
+    if (space > after.length) {
+      return 0;
+    }
+  }
+
+  if (afterGroups.length === 0) {
+    if (after.indexOf('#') === -1) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  const firstLetterOfAfter = after[0];
+  switch (firstLetterOfAfter) {
+    case '.':
+      return getMatchesOptimized({
+        after: after.slice(1),
+        afterGroups: afterGroups,
+      });
+    case '?':
+      const matchesWithDot = getMatchesOptimized({
+        after: ['.', ...after.slice(1)],
+        afterGroups: afterGroups,
+      });
+      if (afterGroups.length !== 0) {
+        const matchesWithHash = getMatchesOptimized({
+          after: ['#', ...after.slice(1)],
+          afterGroups: afterGroups,
+        });
+        return matchesWithHash + matchesWithDot;
+      } else {
+        return matchesWithDot;
+      }
+    case '#':
+      if (afterGroups.length === 0) {
+        return 0;
+      } else {
+        // let read = '';
+        const totalHash = afterGroups[0];
+        if (after.length < totalHash) {
+          return 0;
+        }
+        for (let i = 0; i < totalHash; i++) {
+          const letter = after[i];
+          if (letter === '.') {
+            return 0;
+          }
+        }
+
+        if (after.length === totalHash) {
+          return getMatchesOptimized({
+            after: [],
+            afterGroups: afterGroups.slice(1)
+          });
+        } else {
+          if (after[totalHash] === '#') {
+            return 0;
+          } else {
+            return getMatchesOptimized({
+              after: after.slice(totalHash + 1),
+              afterGroups: afterGroups.slice(1)
+            });
+          }
+        }
+      }
+    default:
+      throw 'Error';
   }
 };
 
 export const question = async () => {
   const lines = await readFileLines(`${ROOT_DIR_2023}Q12/input.txt`);
-  const caches = {};
 
   let sum = 0;
-  lines.forEach(line => {
+  lines.forEach((line, index) => {
     const split = line.split(' ');
-    const original = `${split[0]}?${split[0]}?${split[0]}?${split[0]}?${split[0]}`.replaceAll(/\.+/g, '.');
-    const groups = parseGroupsArray(`${split[1]},${split[1]},${split[1]},${split[1]},${split[1]}`);
-    console.log(original, 'finding possibilities...');
-    let allPossibilities = getAllPossibilities(original, groups, original.length, caches);
-    const matches = allPossibilities.filter(p => {
-      const lengths = getLengthsForString(p, caches);
-      if (lengths.length !== groups.length) {
-        return false;
-      } else {
-        let allSame = true;
-        for (let i = 0; i < lengths.length; i++) {
-          if (lengths[i] !== groups[i]) {
-            allSame = false;
-            break;
-          }
-        }
-        return allSame;
-      }
-    })
-    console.log(original, `[${groups.join(',')}]`, matches.length);
-    sum += matches.length;
+    const patternSplit = split[0];
+    const groupsSplit = split[1];
+
+    const patternFive = [patternSplit, patternSplit, patternSplit, patternSplit, patternSplit].join('?').replaceAll(/\.+/g, '.');
+    const afterGroupsFive = parseGroupsArray([groupsSplit, groupsSplit, groupsSplit, groupsSplit, groupsSplit].join(','));
+
+    console.log('running', index, patternFive);
+    const matches = getMatches({
+      after: IS_PART_2 ? patternFive.split('') : patternSplit.split(''),
+      afterGroups: IS_PART_2 ? afterGroupsFive : parseGroupsArray(groupsSplit)
+    });
+
+    sum += matches;
   });
 
   console.log(sum);
