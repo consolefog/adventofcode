@@ -2,9 +2,9 @@ import {readFileLines} from '../utils/readFileLines.js';
 import {ROOT_DIR_2023} from '../utils/consts.js';
 import {getGridHeightAndWidth, isOutOfBounds} from './gridUtil.js';
 
-let pointsSeen = new Set();
+let pointsSeen;
 
-const progressBeam = async (grid, beam, beamJourney) => {
+const energize = async (grid, beam, beamJourney) => {
   const currentDirection = beam.direction;
   const xyHash = `${beam.x},${beam.y}`;
   const xydHash = `${xyHash},${currentDirection}`;
@@ -42,7 +42,7 @@ const progressBeam = async (grid, beam, beamJourney) => {
 
   switch (letter) {
     case '.':
-      return await progressBeam(grid, beam, beamJourney);
+      return await energize(grid, beam, beamJourney);
     case '/':
     case '\\':
     case '|':
@@ -73,7 +73,7 @@ const progressBeam = async (grid, beam, beamJourney) => {
           '|': ['south']
         }
       }[currentDirection][letter].map(newDirection => {
-        progressBeam(grid, {
+        energize(grid, {
           ...beam,
           direction: newDirection,
         }, beamJourney);
@@ -83,13 +83,14 @@ const progressBeam = async (grid, beam, beamJourney) => {
   }
 };
 
-const countNumberEnergized = async (startX, startY, startDirection, grid) => {
+const count = async (startX, startY, startDirection, grid) => {
+  pointsSeen = new Set();
   const beam = {
     x: startX,
     y: startY,
     direction: startDirection,
   };
-  await progressBeam(grid, beam, new Set());
+  await energize(grid, beam, new Set());
   // we start out of bounds so delete that point.
   pointsSeen.delete(`${startX},${startY}`);
   return pointsSeen.size;
@@ -101,36 +102,27 @@ export const question = async () => {
   const gridDimensions = getGridHeightAndWidth(grid);
   const gridHeight = gridDimensions.height;
   const gridWidth = gridDimensions.width;
+  const leftEdge = -1;
+  const rightEdge = gridWidth;
+  const topEdge = -1;
+  const bottomEdge = gridHeight;
 
   let best = 0;
 
-  // going east from left edge
-  for (let row = 0; row < gridHeight; row++) {
-    pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(-1, row, 'east', grid);
-    best = Math.max(best, numberEnergized);
+  for (let y = 0; y < gridHeight; y++) {
+    // going east from left edge
+    best = Math.max(best, await count(leftEdge, y, 'east', grid));
+    // going west from right edge
+    best = Math.max(best, await count(rightEdge, y, 'west', grid));
   }
 
-  // going west from right edge
-  for (let row = 0; row < gridHeight; row++) {
-    pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(gridWidth, row, 'west', grid);
-    best = Math.max(best, numberEnergized);
+  for (let x = 0; x < gridWidth; x++) {
+    // going south from top edge
+    best = Math.max(best, await count(x, topEdge, 'south', grid));
+    // going north from bottom edge
+    best = Math.max(best, await count(x, bottomEdge, 'north', grid));
   }
 
-  // going south from top edge
-  for (let column = 0; column < gridWidth; column++) {
-    pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(column, -1, 'south', grid);
-    best = Math.max(best, numberEnergized);
-  }
-
-  // going north from bottom edge
-  for (let column = 0; column < gridWidth; column++) {
-    pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(column, gridHeight, 'north', grid);
-    best = Math.max(best, numberEnergized);
-  }
 
   console.log(best);
 
