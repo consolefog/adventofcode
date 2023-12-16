@@ -126,37 +126,39 @@ const countNumberEnergized = async (startX, startY, startDirection, grid) => {
 };
 
 export const question = async () => {
-  let best = 0;
-
   const lines = await readFileLines(`${ROOT_DIR_2023}Q16/input.txt`);
   const grid = lines.map(line => line.split(''));
   const gridDimensions = getGridHeightAndWidth(grid);
+  const gridHeight = gridDimensions.height;
+  const gridWidth = gridDimensions.width;
+
+  let best = 0;
 
   // going east from left edge
-  for (let startY = 0; startY < gridDimensions.height; startY++) {
+  for (let startY = 0; startY < gridHeight; startY++) {
     pointsSeen = new Set();
     const numberEnergized = await countNumberEnergized(-1, startY, 'east', grid);
     best = Math.max(best, numberEnergized);
   }
 
   // going west from right edge
-  for (let startY = 0; startY < gridDimensions.height; startY++) {
+  for (let startY = 0; startY < gridHeight; startY++) {
     pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(gridDimensions.width, startY, 'west', grid);
+    const numberEnergized = await countNumberEnergized(gridWidth, startY, 'west', grid);
     best = Math.max(best, numberEnergized);
   }
 
   // going south from top edge
-  for (let startX = 0; startX < gridDimensions.width; startX++) {
+  for (let startX = 0; startX < gridWidth; startX++) {
     pointsSeen = new Set();
     const numberEnergized = await countNumberEnergized(startX, -1, 'south', grid);
     best = Math.max(best, numberEnergized);
   }
 
   // going north from bottom edge
-  for (let startX = 0; startX < gridDimensions.width; startX++) {
+  for (let startX = 0; startX < gridWidth; startX++) {
     pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(startX, gridDimensions.height, 'north', grid);
+    const numberEnergized = await countNumberEnergized(startX, gridHeight, 'north', grid);
     best = Math.max(best, numberEnergized);
   }
 
