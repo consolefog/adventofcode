@@ -2,54 +2,12 @@ import {readFileLines} from '../utils/readFileLines.js';
 import {ROOT_DIR_2023} from '../utils/consts.js';
 import {getGridHeightAndWidth, isOutOfBounds} from './gridUtil.js';
 
-const getReflectedDirection = (mirrorLetter, currentDirection) => {
-  return {
-    'east': {
-      '/': 'north',
-      '\\': 'south'
-    },
-    'west': {
-      '/': 'south',
-      '\\': 'north'
-    },
-    'north': {
-      '/': 'east',
-      '\\': 'west'
-    },
-    'south': {
-      '/': 'west',
-      '\\': 'east'
-    }
-  }[currentDirection][mirrorLetter];
-}
-
-const getBeamDirectionsPostInteraction = (splitterLetter, currentDirection) => {
-  return {
-    'east': {
-      '-': ['east'],
-      '|': ['north', 'south']
-    },
-    'west': {
-      '-': ['west'],
-      '|': ['north', 'south']
-    },
-    'north': {
-      '-': ['west', 'east'],
-      '|': ['north']
-    },
-    'south': {
-      '-': ['west', 'east'],
-      '|': ['south']
-    }
-  }[currentDirection][splitterLetter];
-}
-
-
 let pointsSeen = new Set();
 
 const progressBeam = async (grid, beam, beamJourney) => {
+  const currentDirection = beam.direction;
   const xyHash = `${beam.x},${beam.y}`;
-  const xydHash = `${xyHash},${beam.direction}`;
+  const xydHash = `${xyHash},${currentDirection}`;
   pointsSeen.add(xyHash);
 
   if (beamJourney.has(xydHash)) {
@@ -59,7 +17,7 @@ const progressBeam = async (grid, beam, beamJourney) => {
     beamJourney.add(xydHash);
   }
 
-  switch (beam.direction) {
+  switch (currentDirection) {
     case 'east':
       beam.x = beam.x + 1;
       break;
@@ -73,53 +31,65 @@ const progressBeam = async (grid, beam, beamJourney) => {
       beam.y = beam.y + 1;
       break;
     default:
-      throw `Error - unknown direction ${beam.direction}`;
+      throw `Error - unknown direction ${currentDirection}`;
   }
 
   if (isOutOfBounds(grid, beam)) {
     return;
   }
 
-  switch (grid[beam.y][beam.x]) {
-    case '.': // same direction
-      return await progressBeam(grid, {
-        ...beam,
-      }, beamJourney);
+  const letter = grid[beam.y][beam.x];
+
+  switch (letter) {
+    case '.':
+      return await progressBeam(grid, beam, beamJourney);
     case '/':
     case '\\':
-      return await progressBeam(grid, {
-        ...beam,
-        direction: getReflectedDirection(grid[beam.y][beam.x], beam.direction)
-      }, beamJourney);
     case '|':
     case '-':
-      const directions = getBeamDirectionsPostInteraction(grid[beam.y][beam.x], beam.direction);
-      if (directions.length === 1) {
-        return await progressBeam(grid, {
+      return await Promise.all({
+        'east': {
+          '/': ['north'],
+          '\\': ['south'],
+          '-': ['east'],
+          '|': ['north', 'south']
+        },
+        'west': {
+          '/': ['south'],
+          '\\': ['north'],
+          '-': ['west'],
+          '|': ['north', 'south']
+        },
+        'north': {
+          '/': ['east'],
+          '\\': ['west'],
+          '-': ['west', 'east'],
+          '|': ['north']
+        },
+        'south': {
+          '/': ['west'],
+          '\\': ['east'],
+          '-': ['west', 'east'],
+          '|': ['south']
+        }
+      }[currentDirection][letter].map(newDirection => {
+        progressBeam(grid, {
           ...beam,
-          direction: directions[0],
+          direction: newDirection,
         }, beamJourney);
-      } else {
-        await progressBeam(grid, {
-          ...beam,
-          direction: directions[0],
-        }, beamJourney);
-        return await progressBeam(grid, {
-          ...beam,
-          direction: directions[1],
-        }, beamJourney);
-      }
+      }));
     default:
-      throw `Error - unknown item "${grid[beam.y][beam.x]}"`;
+      throw `Error - unknown item "${letter}"`;
   }
 };
 
 const countNumberEnergized = async (startX, startY, startDirection, grid) => {
-  await progressBeam(grid, {
+  const beam = {
     x: startX,
     y: startY,
     direction: startDirection,
-  }, new Set());
+  };
+  await progressBeam(grid, beam, new Set());
   // we start out of bounds so delete that point.
   pointsSeen.delete(`${startX},${startY}`);
   return pointsSeen.size;
