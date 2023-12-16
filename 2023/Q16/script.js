@@ -79,7 +79,7 @@ const energize = async (grid, beam, beamJourney) => {
         }, beamJourney);
       }));
     default:
-      throw `Error - unknown item "${letter}"`;
+      throw `Error - unknown letter "${letter}"`;
   }
 };
 
