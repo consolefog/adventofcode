@@ -59,53 +59,58 @@ const progressBeam = async (grid, beam, beamJourney) => {
     beamJourney.add(xydHash);
   }
 
-  if (beam.direction === 'east') {
-    beam.x = beam.x + 1;
-  } else if (beam.direction === 'west') {
-    beam.x = beam.x -1;
-  } else if (beam.direction === 'north') {
-    beam.y = beam.y - 1;
-  } else if (beam.direction === 'south') {
-    beam.y = beam.y + 1;
-  } else {
-    throw `Error - unknown direction ${beam.direction}`
+  switch (beam.direction) {
+    case 'east':
+      beam.x = beam.x + 1;
+      break;
+    case 'west':
+      beam.x = beam.x - 1;
+      break;
+    case 'north':
+      beam.y = beam.y - 1;
+      break;
+    case 'south':
+      beam.y = beam.y + 1;
+      break;
+    default:
+      throw `Error - unknown direction ${beam.direction}`;
   }
 
   if (isOutOfBounds(grid, beam)) {
     return;
   }
 
-  const thingHere = grid[beam.y][beam.x];
-
-  if (thingHere === '.') {
-    // same direction
-    return await progressBeam(grid, {
-      ...beam,
-    }, beamJourney);
-  } else if (thingHere === '/' || thingHere === '\\') {
-    return await progressBeam(grid, {
-      ...beam,
-      direction: getReflectedDirection(thingHere, beam.direction)
-    }, beamJourney);
-  } else if (thingHere === '|' || thingHere === '-') {
-    const directions = getBeamDirectionsPostInteraction(thingHere, beam.direction);
-    if (directions.length === 1) {
+  switch (grid[beam.y][beam.x]) {
+    case '.': // same direction
       return await progressBeam(grid, {
         ...beam,
-        direction: directions[0],
       }, beamJourney);
-    } else {
-      await progressBeam(grid,{
+    case '/':
+    case '\\':
+      return await progressBeam(grid, {
         ...beam,
-        direction: directions[0],
+        direction: getReflectedDirection(grid[beam.y][beam.x], beam.direction)
       }, beamJourney);
-      return await progressBeam(grid,{
-        ...beam,
-        direction: directions[1],
-      }, beamJourney)
-    }
-  } else {
-    throw `Error - unknown item "${thingHere}"`;
+    case '|':
+    case '-':
+      const directions = getBeamDirectionsPostInteraction(grid[beam.y][beam.x], beam.direction);
+      if (directions.length === 1) {
+        return await progressBeam(grid, {
+          ...beam,
+          direction: directions[0],
+        }, beamJourney);
+      } else {
+        await progressBeam(grid, {
+          ...beam,
+          direction: directions[0],
+        }, beamJourney);
+        return await progressBeam(grid, {
+          ...beam,
+          direction: directions[1],
+        }, beamJourney);
+      }
+    default:
+      throw `Error - unknown item "${grid[beam.y][beam.x]}"`;
   }
 };
 
