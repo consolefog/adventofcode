@@ -135,30 +135,30 @@ export const question = async () => {
   let best = 0;
 
   // going east from left edge
-  for (let startY = 0; startY < gridHeight; startY++) {
+  for (let row = 0; row < gridHeight; row++) {
     pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(-1, startY, 'east', grid);
+    const numberEnergized = await countNumberEnergized(-1, row, 'east', grid);
     best = Math.max(best, numberEnergized);
   }
 
   // going west from right edge
-  for (let startY = 0; startY < gridHeight; startY++) {
+  for (let row = 0; row < gridHeight; row++) {
     pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(gridWidth, startY, 'west', grid);
+    const numberEnergized = await countNumberEnergized(gridWidth, row, 'west', grid);
     best = Math.max(best, numberEnergized);
   }
 
   // going south from top edge
-  for (let startX = 0; startX < gridWidth; startX++) {
+  for (let column = 0; column < gridWidth; column++) {
     pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(startX, -1, 'south', grid);
+    const numberEnergized = await countNumberEnergized(column, -1, 'south', grid);
     best = Math.max(best, numberEnergized);
   }
 
   // going north from bottom edge
-  for (let startX = 0; startX < gridWidth; startX++) {
+  for (let column = 0; column < gridWidth; column++) {
     pointsSeen = new Set();
-    const numberEnergized = await countNumberEnergized(startX, gridHeight, 'north', grid);
+    const numberEnergized = await countNumberEnergized(column, gridHeight, 'north', grid);
     best = Math.max(best, numberEnergized);
   }
 
